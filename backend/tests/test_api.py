@@ -205,6 +205,40 @@ def test_stream_failure_not_fabricated(client_factory, text):
     assert TEST_KEY not in response.text
 
 
+def test_nullable_stream_content_does_not_interrupt_answer(client_factory):
+    frames = [
+        {"choices": [{"delta": {"role": "assistant", "content": ""}}]},
+        {"choices": [{"delta": {"content": None, "reasoning_content": "Private reasoning"}}]},
+        {"choices": [{"delta": {"content": "Hello"}}]},
+        {"choices": [{"delta": {"content": None}}]},
+        {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        {"choices": []},
+    ]
+    text = "".join("data: " + json.dumps(frame) + "\n\n" for frame in frames)
+    text += "data: [DONE]\n\n"
+    response = client_factory(
+        lambda request: httpx.Response(
+            200, headers={"content-type": "text/event-stream"}, text=text
+        )
+    ).post("/api/chat", json={**CHAT, "stream": True}, headers=HEADERS)
+    assert "event: done" in response.text and "event: error" not in response.text
+    assert "Hello" in response.text and "Private reasoning" not in response.text
+
+
+@pytest.mark.parametrize(
+    "frame", [[], {"choices": {}}, {"choices": [None]}, {"choices": [{"delta": None}]}]
+)
+def test_invalid_stream_structures_return_sanitized_error(client_factory, frame):
+    response = client_factory(
+        lambda request: httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            text="data: " + json.dumps(frame) + "\n\ndata: [DONE]\n\n",
+        )
+    ).post("/api/chat", json={**CHAT, "stream": True}, headers=HEADERS)
+    assert "event: error" in response.text and "event: done" not in response.text
+
+
 def test_origin_and_unauthorized_requests(client_factory):
     client = client_factory()
     assert (

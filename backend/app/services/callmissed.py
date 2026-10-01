@@ -125,10 +125,25 @@ class CallMissed:
                         done = True
                         break
                     data = json.loads(raw)
+                    if not isinstance(data, dict):
+                        raise ValueError("Invalid stream frame")
                     if data.get("error"):
                         raise ValueError("Upstream stream error")
                     choices = data.get("choices", [])
-                    content = choices[0].get("delta", {}).get("content", "") if choices else ""
+                    if not isinstance(choices, list):
+                        raise ValueError("Invalid stream choices")
+                    content = ""
+                    if choices:
+                        if not isinstance(choices[0], dict):
+                            raise ValueError("Invalid stream choice")
+                        delta = choices[0].get("delta", {})
+                        if not isinstance(delta, dict):
+                            raise ValueError("Invalid stream delta")
+                        content = delta.get("content", "")
+                    # Role, reasoning and completion frames may carry no text.
+                    # Forward only actual answer content, never reasoning fields.
+                    if content is None:
+                        content = ""
                     if not isinstance(content, str):
                         raise ValueError()
                     if content:

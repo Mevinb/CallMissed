@@ -4,7 +4,7 @@ A Python backend assessment project by Mevin Benty: one workspace for streaming 
 
 **Repository:** https://github.com/Mevinb/CallMissed  
 **Hosted application:** deployment pending account authentication and production environment configuration.  
-**Verification:** mocked backend and frontend tests pass; live CallMissed inference, browser audio playback, Docker execution, and public deployment have not yet been verified. See [verification notes](docs/VERIFICATION.md).
+**Verification:** 69 backend tests and 17 frontend/audio tests pass. Live CallMissed chat, image generation, and receipt of voice greeting audio passed; streaming chat and greeting audio also passed through the local FastAPI backend. Browser microphone/playback, Docker execution, and public deployment remain unverified. See [verification notes](docs/VERIFICATION.md).
 
 ## Features
 
