@@ -3,8 +3,8 @@
 A Python backend assessment project by Mevin Benty: one workspace for streaming AI chat, text-to-image generation, and real-time voice conversations. Every AI request uses CallMissed. The API key stays on the server.
 
 **Repository:** https://github.com/Mevinb/CallMissed  
-**Hosted application:** deployment pending account authentication and production environment configuration.  
-**Verification:** 69 backend tests and 17 frontend/audio tests pass. Live CallMissed chat, image generation, and receipt of voice greeting audio passed; streaming chat and greeting audio also passed through the local FastAPI backend. Browser microphone/playback, Docker execution, and public deployment remain unverified. See [verification notes](docs/VERIFICATION.md).
+**Hosted application:** Vercel project and production settings prepared; deployment pending Redis integration terms acceptance and provisioning.  
+**Verification:** 71 backend tests and 17 frontend/audio tests pass. Live CallMissed chat, image generation, and receipt of voice greeting audio passed; streaming chat and greeting audio also passed through the local FastAPI backend. Browser microphone/playback, Docker execution, and public deployment remain unverified. See [verification notes](docs/VERIFICATION.md).
 
 ## Features
 

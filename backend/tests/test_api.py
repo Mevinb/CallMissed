@@ -289,6 +289,26 @@ def test_production_configuration():
         )
 
 
+@pytest.mark.parametrize("invalid_environment", [False, True])
+def test_configuration_errors_hide_private_inputs(invalid_environment):
+    signature = "private-signature-too-short"
+    access_code = "private-reviewer-code"
+    with pytest.raises(ValidationError) as caught:
+        Settings(
+            _env_file=None,
+            app_env="private-invalid-environment" if invalid_environment else "production",
+            session_secret=signature,
+            demo_access_code=access_code,
+            callmissed_api_key=TEST_KEY,
+            vercel=False,
+        )
+    message = str(caught.value)
+    assert TEST_KEY not in message
+    assert signature not in message
+    assert access_code not in message
+    assert "input_value=" not in message
+
+
 def test_access_code_and_cookie_flags():
     settings = Settings(
         _env_file=None,

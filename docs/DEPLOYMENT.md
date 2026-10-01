@@ -41,6 +41,14 @@ npx vercel deploy --prod
 
 A CLI device sign-in must be completed by the account owner. Connecting Vercel to GitHub may require the owner to approve a repository permission screen. Neither access nor deployment success is assumed.
 
+If Upstash's CLI-provided browser terms link returns 404, the owner can review and accept its terms from an interactive terminal:
+
+```bash
+npx vercel integration accept-terms upstash --scope YOUR-VERCEL-TEAM
+```
+
+That command requires a human confirmation and installs the integration only. Provision the Redis product afterward with `--plan free`, `--metadata autoUpgrade=false`, and `--no-env-pull` when secrets will be handled separately. Alternatively use the [Upstash Marketplace page](https://vercel.com/marketplace/upstash) and its Install button. Do not accept terms or switch to a paid plan automatically.
+
 ## AWS EC2 Free Tier-compatible fallback
 
 This is a lightweight single-instance deployment. It does not require an ALB, NAT gateway, RDS, Kubernetes or GPUs. [AWS Free Tier eligibility](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html) depends on account creation date, account plan, available credits and regional instance eligibility; `t3.micro` is a reasonable small x86 target when your console marks it eligible. Check the console estimate first. Public IPv4, disk, surplus CPU credits and traffic can affect cost.
