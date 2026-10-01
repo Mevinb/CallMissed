@@ -1,0 +1,13 @@
+{$APP_DOMAIN} {
+    encode gzip
+    request_body {
+        max_size 200KB
+    }
+    reverse_proxy app:8000 {
+        flush_interval -1
+    }
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' blob: data: https:; connect-src 'self' wss:; media-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+    }
+}

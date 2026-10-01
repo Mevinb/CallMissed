@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "buildCommand": "npm --prefix frontend ci && npm --prefix frontend run build",
+  "functions": {"backend/app/main.py": {"maxDuration": 300, "excludeFiles": "{.venv/**,frontend/node_modules/**,backend/tests/**,docs/**}"}},
+  "headers": [{"source": "/(.*)", "headers": [
+    {"key":"X-Content-Type-Options","value":"nosniff"},
+    {"key":"Referrer-Policy","value":"no-referrer"},
+    {"key":"X-Frame-Options","value":"DENY"},
+    {"key":"Permissions-Policy","value":"microphone=(self), camera=()"},
+    {"key":"Content-Security-Policy","value":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' blob: data: https:; connect-src 'self' wss:; media-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"}
+  ]}]
+}

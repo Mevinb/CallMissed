@@ -1,0 +1,17 @@
+.git
+.local-git
+.agents
+.codex
+.aws
+.env
+.env.*
+.venv
+frontend/node_modules
+frontend/dist
+backend/tests
+__pycache__
+.pytest_cache
+.ruff_cache
+.vercel
+docs
+artifacts

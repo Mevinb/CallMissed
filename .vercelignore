@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.venv
+.git
+.local-git
+.agents
+.codex
+.aws
+frontend/node_modules
+frontend/dist
+backend/tests
+__pycache__
+.pytest_cache
+.ruff_cache
+artifacts
+.local-git
