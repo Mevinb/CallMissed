@@ -5,15 +5,16 @@
 - React/Vite/TypeScript frontend with Chat, Image Studio and Voice Agent workspaces.
 - FastAPI routes, validated request models, HTTPX chat/image integration, SSE streaming, WebSocket voice relay and health/session endpoints.
 - Browser microphone AudioWorklet, PCM16 resampling, voice playback scheduling, interruption flush, mute/stop lifecycle and provider transcript events.
-- Server-only API credentials, private reviewer access, signed HttpOnly cookies, explicit origin checks, request/input limits, production startup validation and shared Redis limits for Vercel.
+- Server-only API credentials, private reviewer access, signed HttpOnly cookies, explicit origin checks, request/input limits, production startup validation, shared Redis limits and atomic voice concurrency leases for Vercel.
 - Docker/Compose/Caddy, Vercel configuration, CI workflow, local launcher and real provider smoke-check script.
 - README, deployment instructions and manual acceptance checklist.
 
 ## Executed and passed locally
 
-- **54 Pytest tests:** health, validation, missing key, HTTP errors, timeout/network failures, successful mocked chat/image responses, malformed streams/images, key redaction across stream chunks, cookies, origin enforcement, body limits, shared rate counters and fail-closed Redis behavior, voice settings/audio relay/cleanup, missing key/auth denial and connection timeout. One upstream Starlette TestClient deprecation warning is emitted; tests pass.
-- **9 Vitest tests:** workspace navigation, prompt input, streamed chat and conversation context, cancel/new-chat race, failure display, access gate, microphone denial cleanup, SSE decoding and interrupted streams.
+- **64 Pytest tests:** health, validation, missing key, HTTP errors, timeout/network failures, successful mocked chat/image responses, malformed streams/images, key redaction across stream chunks, cookies, origin enforcement, body limits, shared rate counters and fail-closed Redis behavior, voice settings/audio relay/cleanup, missing key/auth denial, connection timeout, cross-worker concurrency, owned lease release and failed browser-accept cleanup. One upstream Starlette TestClient deprecation warning is emitted; tests pass.
+- **13 Vitest tests:** workspace navigation, prompt input, streamed chat and conversation context, cancel/new-chat race, failure display, access gate, microphone denial cleanup, SSE decoding, interrupted streams, image generation/download/reuse/clear, prompt-edit races, late history load, and request cancellation on unmount. DOM and browser APIs are mocked; this is not proof of a real browser download.
 - **4 Node audio tests:** encoding/resampling 24 kHz, 44.1 kHz and 48 kHz input to 24 kHz mono PCM16, and signed clipping.
+- **Real local Redis 7.0.15:** repeated all 10 voice-slot tests with admission/release Lua evaluated by an isolated Redis process over a Unix socket. Separately checked a 300-second lease TTL, expired-slot reclamation and stale-owner protection. This validates Redis script execution; the Upstash HTTP transport and deployed multi-instance behavior remain unverified.
 - TypeScript and Vite production build.
 - Ruff lint and formatting.
 - Clean `npm ci` and npm audit: no reported vulnerabilities at verification time.
@@ -26,7 +27,7 @@
 - **Microphone and playback:** mocked permission/PCM/relay checks do not establish actual microphone capture, audible agent responses or perceptual interruption timing.
 - **Browser visual review and screenshots:** no browser surface is available in the computer-use tool. DOM tests run in jsdom; no screenshots were captured and no responsive rendering claim is made from them.
 - **Docker runtime:** provided and statically inspected; local execution pending a Docker environment. CI includes a build check.
-- **Vercel hosting:** CLI installed/available, but the account is signed out and device login has not completed. Production deployment also requires secrets, exact app origin and Upstash Redis REST configuration. No hosted URL has been invented.
+- **Vercel hosting:** CLI installed/available, but the account is signed out and device login has not completed. The user deferred credential setup and account sign-in on October 1. Production deployment also requires secrets, exact app origin and persistent Upstash Redis REST configuration. No hosted URL has been invented.
 - **GitHub Actions:** workflow included; remote run must be checked after publication.
 - **GitHub publication:** the existing destination repository was inspected and was empty. The connector rejected the write because it requires approval and this session uses approval policy `never`. No remote files were created. Local source commit and a source archive are prepared for owner-controlled publication.
 - **Submission:** user review and approval pending. No email has been sent or staged for automatic sending.

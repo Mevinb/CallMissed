@@ -24,7 +24,7 @@ flowchart LR
     Browser <-->|PCM16 over same-origin WebSocket| API
     API -->|Bearer authentication| Chat[CallMissed chat / images]
     API <-->|Token authentication / PCM16| Voice[CallMissed managed voice agent]
-    API -->|atomic shared request limits| Redis[Upstash Redis on Vercel]
+    API -->|atomic shared request limits and voice leases| Redis[Upstash Redis on Vercel]
 ```
 
 The frontend uses relative `/api` URLs. In development Vite proxies these to Python. In production frontend and API share one origin, so the browser never needs the CallMissed key or a cross-site session cookie. Vercel Fluid Compute serves the FastAPI WebSocket endpoint; this is a currently documented beta capability and must be verified on the deployed project.
@@ -132,7 +132,9 @@ npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
-Backend tests use HTTPX MockTransport and a fake upstream voice socket; no external credentials or paid calls are needed. Frontend tests exercise navigation, streamed answers, error handling, access control and microphone denial; PCM tests check resampling and signed encoding. These tests do not prove provider availability, microphone hardware, perceptual audio quality or public hosting.
+Backend tests use HTTPX MockTransport and a fake upstream voice socket; no external credentials or paid calls are needed. They include shared voice admission, global concurrency and lease ownership checks. Frontend tests exercise navigation, streamed answers, image generation/download/history, pending-request races, error handling, access control and microphone denial; PCM tests check resampling and signed encoding. These tests do not prove provider availability, microphone hardware, perceptual audio quality or public hosting.
+
+For an optional real Lua check, start an isolated local Redis with only a Unix socket and set `CALLMISSED_TEST_REDIS_SOCKET` to its socket path and `CALLMISSED_TEST_REDIS_CLI` to your `redis-cli` executable, then run `pytest backend/tests/test_voice_slots.py -q`. The test transport evaluates the admission/release scripts in that Redis process. It still mocks HTTP and never uses production Redis credentials.
 
 With your API key configured, run an actual provider smoke check separately:
 
@@ -167,7 +169,7 @@ Detailed steps and the AWS EC2 + Caddy fallback are in [deployment guide](docs/D
 - Chat: up to 40 messages, 8,000 characters per message and 40,000 per request; up to 2,048 output tokens. New chat clears local history.
 - Images: one generation per request, at most 3 MB decoded. Larger/invalid images fail with a useful error to stay inside Vercel response-size limits; no arbitrary image URL proxy or SVG rendering.
 - Per-session limits: 20 chat requests/minute, 3 image requests/minute and 3 voice starts/hour. Login allows 10 attempts/minute per server-observed client address. Global daily requests are shared with Redis. Fixed windows can permit a burst near a boundary.
-- Voice: four minutes maximum, handshake deadline, bounded frame sizes, audio throughput limit and a maximum of four local active relays. One active voice session per browser session is enforced within a worker; the CallMissed account's concurrent-session limit is authoritative across Vercel instances. Multi-instance duplicate-session prevention would require a distributed lease.
+- Voice: four minutes maximum, handshake deadline, bounded frame sizes and audio throughput limit. Atomic Redis leases enforce one active relay per browser session and four across all instances. Admission fails closed if Redis is unavailable. Normal disconnect releases the slot; a crash or failed release leaves an expiring lease for at most five minutes. A stale connection cannot release a newer call's slot. The provider may impose a lower account concurrency limit.
 - Without Redis, limits are in process memory: use exactly one Uvicorn worker on EC2 and expect limits to reset after a restart. Vercel production requires Redis and fails closed when the limit service is unavailable.
 - The reviewer code is intentionally simple demo authentication, not a multi-user identity platform. Locking removes the browser cookie; stolen cookies remain valid until their eight-hour expiry unless the session secret is rotated. Logging out stops local voice immediately.
 - No automatic retry of inference or voice reconnection: duplicate requests can spend credits or create overlapping sessions. Choose another model explicitly when a configured model is unavailable.

@@ -24,13 +24,15 @@ export async function jsonRequest<T>(
   path: string,
   body?: unknown,
   method = body === undefined ? "GET" : "POST",
+  signal?: AbortSignal,
 ): Promise<T> {
+  const timeout = AbortSignal.timeout(path === "/images" ? 200000 : 30000);
   const response = await fetch("/api" + path, {
     method,
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(path === "/images" ? 200000 : 30000),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
   if (!response.ok) throw new Error(await errorMessage(response));
   return response.json();

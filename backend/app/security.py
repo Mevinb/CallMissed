@@ -15,32 +15,34 @@ class RateLimiter:
         self.settings, self.client = settings, client
         self.windows = OrderedDict()
 
+    async def redis_command(self, command):
+        try:
+            response = await self.client.post(
+                self.settings.upstash_redis_rest_url,
+                headers={
+                    "Authorization": "Bearer "
+                    + self.settings.upstash_redis_rest_token.get_secret_value()
+                },
+                json=command,
+                timeout=5,
+            )
+            response.raise_for_status()
+            value = response.json()["result"]
+            if type(value) is not int or value < 0:
+                raise ValueError("Invalid Redis result")
+            return value
+        except Exception:
+            raise AppError(
+                503, "limits_unavailable", "The access service is temporarily unavailable."
+            ) from None
+
     async def hit(self, identity: str, category: str, limit: int, seconds: int):
         bucket = int(time.time()) // seconds
         digest = hashlib.sha256(identity.encode()).hexdigest()[:32]
         key = f"callmissed:{category}:{digest}:{bucket}"
         if self.settings.upstash_redis_rest_url:
             script = "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n"
-            try:
-                response = await self.client.post(
-                    self.settings.upstash_redis_rest_url,
-                    headers={
-                        "Authorization": "Bearer "
-                        + self.settings.upstash_redis_rest_token.get_secret_value()
-                    },
-                    json=["EVAL", script, "1", key, str(seconds * 2)],
-                    timeout=5,
-                )
-                response.raise_for_status()
-                count = response.json()["result"]
-                if not isinstance(count, int):
-                    raise ValueError("Invalid Redis result")
-            except Exception:
-                raise AppError(
-                    503,
-                    "limits_unavailable",
-                    "The access service is temporarily unavailable.",
-                ) from None
+            count = await self.redis_command(["EVAL", script, "1", key, str(seconds * 2)])
         else:
             count = self.windows.get(key, 0) + 1
             self.windows[key] = count

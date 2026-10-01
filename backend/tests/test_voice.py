@@ -74,7 +74,7 @@ def test_voice_handshake_audio_and_cleanup(client_factory, voice_provider):
     assert settings["audio"]["input"] == {"encoding": "linear16", "sample_rate": 24000}
     assert settings["agent"]["stt"]["model"] == "saaras:v3"
     assert upstream.closed
-    assert not client.app.state.voice_sessions
+    assert not client.app.state.voice_slots.active
 
 
 @pytest.mark.parametrize(
@@ -115,4 +115,4 @@ def test_voice_provider_timeout(client_factory):
         event = socket.receive_json()
         assert event["code"] == "voice_timeout"
         assert TEST_KEY not in json.dumps(event)
-    assert not client.app.state.voice_sessions
+    assert not client.app.state.voice_slots.active

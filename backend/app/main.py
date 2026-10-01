@@ -10,6 +10,7 @@ from .config import Settings
 from .errors import AppError, app_error_handler
 from .models import LoginRequest
 from .security import Sessions, RateLimiter
+from .voice_slots import VoiceSlots
 from .services.callmissed import CallMissed
 from .services.voice import DEFAULT_CONNECTOR
 from .routes import chat, images, voice
@@ -75,7 +76,7 @@ def create_app(settings=None, transport=None, voice_connector=None):
             app.state.limiter = RateLimiter(settings, client)
             app.state.callmissed = CallMissed(settings, client)
             app.state.voice_connector = voice_connector or DEFAULT_CONNECTOR
-            app.state.voice_sessions = set()
+            app.state.voice_slots = VoiceSlots(settings, app.state.limiter)
             yield
 
     app = FastAPI(

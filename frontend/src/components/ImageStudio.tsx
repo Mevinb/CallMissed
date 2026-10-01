@@ -21,13 +21,25 @@ export default function ImageStudio({ session }: { session: Session }) {
   const [preview, setPreview] = useState<GeneratedImage | null>(null);
   const [storageNote, setStorageNote] = useState("");
   const imagesRef = useRef(images);
+  const controller = useRef<AbortController | null>(null);
   imagesRef.current = images;
   useEffect(() => {
     let canceled = false;
     void loadImages()
       .then((result) => {
         if (canceled) result.forEach((x) => URL.revokeObjectURL(x.url!));
-        else setImages(result);
+        else
+          setImages((current) => {
+            const merged = [...current];
+            result.forEach((image) => {
+              if (merged.some((x) => x.id === image.id))
+                URL.revokeObjectURL(image.url!);
+              else merged.push(image);
+            });
+            merged.sort((a, b) => b.created - a.created);
+            merged.slice(6).forEach((x) => URL.revokeObjectURL(x.url!));
+            return merged.slice(0, 6);
+          });
       })
       .catch(() =>
         setStorageNote(
@@ -36,6 +48,8 @@ export default function ImageStudio({ session }: { session: Session }) {
       );
     return () => {
       canceled = true;
+      controller.current?.abort();
+      controller.current = null;
       imagesRef.current.forEach((x) => URL.revokeObjectURL(x.url!));
     };
   }, []);
@@ -43,20 +57,30 @@ export default function ImageStudio({ session }: { session: Session }) {
     if (!prompt.trim() || busy) return;
     setBusy(true);
     setError("");
+    const request = new AbortController();
+    controller.current = request;
+    const requestedPrompt = prompt.trim();
+    const requestedSize = size;
     try {
       const result = await jsonRequest<{
         b64_json: string;
         mime_type: string;
         model: string;
-      }>("/images", { prompt, size });
+      }>(
+        "/images",
+        { prompt: requestedPrompt, size: requestedSize },
+        "POST",
+        request.signal,
+      );
+      if (request.signal.aborted) return;
       const bytes = Uint8Array.from(atob(result.b64_json), (c) =>
         c.charCodeAt(0),
       );
       const blob = new Blob([bytes], { type: result.mime_type });
       const image: GeneratedImage = {
         id: crypto.randomUUID(),
-        prompt: prompt.trim(),
-        size,
+        prompt: requestedPrompt,
+        size: requestedSize,
         model: result.model,
         blob,
         created: Date.now(),
@@ -74,9 +98,13 @@ export default function ImageStudio({ session }: { session: Session }) {
         );
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Image generation failed.");
+      if (!request.signal.aborted)
+        setError(e instanceof Error ? e.message : "Image generation failed.");
     } finally {
-      setBusy(false);
+      if (controller.current === request) {
+        controller.current = null;
+        setBusy(false);
+      }
     }
   }
   async function clear() {
