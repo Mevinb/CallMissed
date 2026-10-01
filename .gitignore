@@ -14,3 +14,6 @@ coverage/
 *.tsbuildinfo
 .local-git/
 artifacts/
+.aws
+.agents
+.codex

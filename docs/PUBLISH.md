@@ -1,10 +1,10 @@
 # Remaining account actions
 
-The project is implemented and tested locally. These steps finish external publication and verification.
+The project is implemented, tested locally and deployed at https://callmissed-playground.vercel.app. Hosted chat, image generation and voice greeting/relay checks passed. These steps finish source publication and browser acceptance.
 
 ## GitHub
 
-The `Mevinb/CallMissed` repository was inspected and was empty. The connected GitHub tool refused writes because it requires approval and this session's approval policy is `never`. No remote changes were made.
+The public `Mevinb/CallMissed` repository now contains commit `019d164e2903`. The latest local startup-validation security change and deployment notes still need a push. The connected GitHub tool refused writes because it requires approval and this session's approval policy is `never`; no remote changes were made through that tool.
 
 A local source commit is prepared using `.local-git` metadata because the managed workspace's `.git` directory is read-only. From the project directory, in your own authenticated terminal:
 
@@ -17,12 +17,12 @@ git --git-dir=.local-git --work-tree=. push -u origin main
 
 Alternatively unpack `artifacts/callmissed-playground-source.zip` into a new empty directory, initialize Git there, add the intended remote and push the source. The archive excludes credentials, installed dependencies and generated builds.
 
-After publication, check the GitHub Actions CI run. Docker build and hosted integration checks have not been executed in the managed local session.
+CI for published commit `019d164` passed, including the Docker build. After pushing the latest changes, check their new GitHub Actions run. Vercel build and hosted protocol checks passed; running the container remains unverified.
 
-## Vercel and live credentials
+## Hosted application review
 
-Complete Vercel CLI/device login in an account you control, or import the published repository through your dashboard. See `DEPLOYMENT.md` for production variables, Redis setup and Fluid Compute.
+Vercel login, project configuration, production secrets, Free Upstash Redis and deployment are complete. See `DEPLOYMENT.md` for reproducible setup and `VERIFICATION.md` for observed results. The owner can open the private local `artifacts/reviewer-access.txt` to unlock the app; this file is excluded from Git, deployment and the source archive.
 
-Place `CALLMISSED_API_KEY` in the local ignored `.env` file for live smoke checks. Enter it in Vercel's secure project environment configuration for production; do not put it in the frontend or Git. Set the reviewer code, stable session secret, exact HTTPS origin, and Redis REST credentials as documented before deployment.
+Keep `.env`, `.env.production` and other pulled environment files private. Future environment changes require a new deployment. Never place the provider key in the frontend or Git.
 
-Finally test chat, an image and a spoken voice exchange through the actual hosted application. Update `VERIFICATION.md` with observed results and the real hosted URL. Submission email preparation starts only after Mevin approves the completed live project.
+Test the actual browser workflows, including a spoken voice exchange and interruption, with `ACCEPTANCE.md`. Update the verification report with those observed results. Submission email preparation starts only after Mevin approves the completed live project.
